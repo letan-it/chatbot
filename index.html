@@ -77,11 +77,13 @@
 
         .app-container {
             width: 100%;
-            max-width: 950px;
+            max-width: 1250px;
             height: 95vh;
             padding: 20px;
             z-index: 10;
             display: flex;
+            gap: 24px;
+            transition: all 0.5s ease;
         }
 
         .hidden {
@@ -168,6 +170,198 @@
         .start-btn:hover {
             background: var(--primary-dark);
             transform: translateY(-2px);
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 320px;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border-radius: 32px;
+            border: 1px solid var(--white);
+            box-shadow: var(--shadow);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: slideInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-40px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .sidebar-content {
+            flex: 1;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(226, 232, 240, 0.5);
+        }
+
+        .sidebar-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .my-id-container {
+            background: rgba(59, 130, 246, 0.05);
+            padding: 16px;
+            border-radius: 20px;
+            border: 1px dashed var(--primary);
+        }
+
+        .my-id-container .label {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .id-badge {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+        }
+
+        #my-peer-id {
+            font-family: 'Monaco', 'Consolas', monospace;
+            font-size: 13px;
+            font-weight: 700;
+            color: var(--primary);
+            word-break: break-all;
+            flex: 1;
+        }
+
+        .connect-box {
+            display: flex;
+            gap: 8px;
+        }
+
+        #peer-id-input {
+            flex: 1;
+            min-width: 0;
+            padding: 12px 14px;
+            border-radius: 14px;
+            border: 1px solid var(--border);
+            outline: none;
+            font-size: 14px;
+        }
+
+        .connect-btn {
+            flex-shrink: 0;
+            background: var(--primary);
+            color: white;
+            border: none;
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .user-list-section .section-title {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 16px;
+            color: var(--text-main);
+        }
+
+        .users-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--white);
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .user-item:hover {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        .user-item.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+        }
+
+        .user-info .name {
+            font-size: 14px;
+            font-weight: 600;
+            display: block;
+        }
+
+        .user-info .status {
+            font-size: 11px;
+            opacity: 0.7;
+        }
+
+        .no-users {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 13px;
+            font-style: italic;
+        }
+
+        .sidebar-footer {
+            padding: 20px 24px;
+            border-top: 1px solid rgba(226, 232, 240, 0.5);
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .ai-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .icon-btn-xs {
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: var(--text-muted);
+            border-radius: 6px;
+        }
+
+        .icon-btn-xs:hover {
+            background: rgba(0,0,0,0.05);
+            color: var(--primary);
         }
 
         /* Chat Wrapper */
@@ -451,13 +645,64 @@
     <div class="bg-orb orb-1"></div>
     <div class="bg-orb orb-2"></div>
 
+    <!-- PeerJS for P2P Chat -->
+    <script src="https://unpkg.com/peerjs@1.5.2/dist/peerjs.min.js"></script>
+
     <div class="app-container">
+        <!-- New Sidebar -->
+        <aside id="sidebar" class="sidebar hidden">
+            <div class="sidebar-content">
+                <div class="sidebar-header">
+                    <i data-lucide="users" class="icon-md"></i>
+                    <h3>Chat Nội Bộ</h3>
+                </div>
+                
+                <div class="my-id-container">
+                    <p class="label">ID của bạn:</p>
+                    <div class="id-badge">
+                        <span id="my-peer-id">Đang kết nối...</span>
+                        <button class="icon-btn-xs" title="Sao chép" onclick="copyMyID()">
+                            <i data-lucide="copy" class="icon-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="connect-box">
+                    <input type="text" id="peer-id-input" placeholder="Nhập ID người khác..." autocomplete="off">
+                    <button id="connect-peer-btn" class="connect-btn">
+                        <i data-lucide="user-plus" class="icon-sm"></i>
+                    </button>
+                </div>
+
+                <div class="user-list-section">
+                    <p class="section-title">Hội thoại</p>
+                    <div id="users-list" class="users-list">
+                        <!-- AI Assistant is always there -->
+                        <div class="user-item active" onclick="switchChatMode('AI')">
+                            <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=TanLe" class="user-avatar">
+                            <div class="user-info">
+                                <span class="name">Tấn Lê AI</span>
+                                <span class="status">Trợ lý ảo</span>
+                            </div>
+                        </div>
+                        <div class="no-users">Chưa có người dùng khác</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="ai-status">
+                    <div class="status-dot"></div>
+                    <span>Tấn Lê AI: Online</span>
+                </div>
+            </div>
+        </aside>
+
         <!-- Welcome Screen -->
         <div id="welcome-screen" class="welcome-screen">
             <i data-lucide="cpu" class="welcome-icon"></i>
             <h1 class="welcome-title">Tấn Lê AI - Bản Live Update</h1>
-            <p class="welcome-desc">Chào mừng bạn! Tôi là hệ thống Chatbot thông minh, tự động cập nhật giá vàng và công
-                nghệ trực tuyến theo thời gian thực.</p>
+            <p class="welcome-desc">Hệ thống Chatbot thông minh hỗ trợ chat nội bộ P2P và cập nhật dữ trực tuyến thời gian thực.</p>
             <div class="input-group">
                 <input type="text" id="username-input" placeholder="Bạn tên là gì nhỉ?" autocomplete="off">
                 <button id="start-chat-btn" class="start-btn">Bắt đầu trò chuyện</button>

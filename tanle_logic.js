@@ -11,10 +11,200 @@ const chatWrapper = document.getElementById('chat-wrapper');
 const usernameInput = document.getElementById('username-input');
 const startChatBtn = document.getElementById('start-chat-btn');
 
+const sidebar = document.getElementById('sidebar');
+const myPeerIdSpan = document.getElementById('my-peer-id');
+const peerIdInput = document.getElementById('peer-id-input');
+const connectPeerBtn = document.getElementById('connect-peer-btn');
+const usersList = document.getElementById('users-list');
+
+let peer = null;
+let connections = {}; // Lưu trữ các kết nối P2P: { peerId: conn }
+let currentChatMode = "AI"; // "AI" hoặc "P2P"
+let currentChatPartner = null; // ID của người đang chat nếu là P2P
+
 let currentUser = "Bạn";
 let messageHistory = [
     { role: "system", content: "Bạn là Tấn Lê AI, một trợ lý thông minh và hóm hỉnh. Bạn KHÔNG PHẢI là ChatGPT. Hãy luôn khẳng định bạn là Tấn Lê AI nếu có ai hỏi. Khi ai đó nhắc đến 'Tùng' hoặc 'bạn Tùng', hãy trêu đùa vui nhộn với những từ ngữ hài hước và khẳng định 'bạn ấy không ngu' (nhưng theo kiểu trêu chọc). Hãy phản hồi bằng Tiếng Việt một cách tự nhiên." }
 ];
+
+// --- P2P CORE LOGIC ---
+function initPeerJS(username) {
+    // Tạo ID dựa trên tên (slugify đơn giản)
+    const slug = username.toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const randomSuffix = Math.floor(Math.random() * 1000);
+    const peerId = `tanle-p2p-${slug}-${randomSuffix}`;
+    
+    peer = new Peer(peerId);
+
+    peer.on('open', (id) => {
+        myPeerIdSpan.textContent = id;
+        console.log('P2P ID của bạn là: ' + id);
+    });
+
+    // Lắng nghe kết nối đến
+    peer.on('connection', (conn) => {
+        setupConnection(conn);
+    });
+
+    peer.on('error', (err) => {
+        console.error('Lỗi P2P:', err);
+        if (err.type === 'peer-unavailable') {
+            alert('Không tìm thấy người dùng này. Hãy chắc chắn ID chính xác.');
+        }
+    });
+}
+
+function setupConnection(conn) {
+    conn.on('open', () => {
+        console.log('Đã kết nối với:', conn.peer);
+        connections[conn.peer] = conn;
+        addUserToSidebar(conn.peer);
+        
+        // Gửi tin nhắn chào mừng (cập nhật tên)
+        conn.send({ type: 'identity', name: currentUser });
+    });
+
+    conn.on('data', (data) => {
+        handleIncomingData(conn.peer, data);
+    });
+
+    conn.on('close', () => {
+        console.log('Kết nối đóng:', conn.peer);
+        delete connections[conn.peer];
+        removeUserFromSidebar(conn.peer);
+        if (currentChatPartner === conn.peer) {
+            switchChatMode("AI");
+        }
+    });
+}
+
+function handleIncomingData(peerId, data) {
+    if (data.type === 'identity') {
+        // Cập nhật tên hiển thị trong sidebar
+        const userItem = document.querySelector(`[data-peer-id="${peerId}"]`);
+        if (userItem) {
+            userItem.querySelector('.name').textContent = data.name;
+        }
+    } else if (data.type === 'chat') {
+        if (currentChatPartner === peerId) {
+            addMessage(data.text, 'incoming', data.senderName);
+        } else {
+            // Thông báo có tin nhắn nháy nháy ở sidebar (tùy chọn)
+            const userItem = document.querySelector(`[data-peer-id="${peerId}"]`);
+            if (userItem) userItem.classList.add('has-new-msg');
+        }
+    }
+}
+
+function connectToPeer(targetId) {
+    if (!targetId || targetId === peer.id) return;
+    if (connections[targetId]) return alert('Đã kết nối với người này rồi.');
+    
+    const conn = peer.connect(targetId);
+    setupConnection(conn);
+}
+
+// --- SIDEBAR UI HELPERS ---
+function addUserToSidebar(peerId) {
+    const noUsers = usersList.querySelector('.no-users');
+    if (noUsers) noUsers.remove();
+
+    const div = document.createElement('div');
+    div.className = 'user-item';
+    div.dataset.peerId = peerId;
+    div.innerHTML = `
+        <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=${peerId}" class="user-avatar">
+        <div class="user-info">
+            <span class="name">${peerId}</span>
+            <span class="status">Đã kết nối</span>
+        </div>
+    `;
+    
+    div.onclick = () => switchChatMode("P2P", peerId);
+    usersList.appendChild(div);
+    lucide.createIcons(); // Re-render icons if any added
+}
+
+function removeUserFromSidebar(peerId) {
+    const item = document.querySelector(`[data-peer-id="${peerId}"]`);
+    if (item) item.remove();
+    
+    if (usersList.children.length === 0) {
+        usersList.innerHTML = '<div class="no-users">Chưa có kết nối nào</div>';
+    }
+}
+
+function switchChatMode(mode, partnerId = null) {
+    currentChatMode = mode;
+    currentChatPartner = partnerId;
+
+    // Reset giao diện chat
+    chatBody.innerHTML = '';
+    
+    // Update Header
+    const headerTitle = document.querySelector('.header-info h2');
+    const headerAvatar = document.querySelector('.header-avatar');
+    const statusText = document.querySelector('.status-badge');
+
+    if (mode === "AI") {
+        headerTitle.textContent = "Tấn Lê AI";
+        headerAvatar.src = "https://api.dicebear.com/7.x/avataaars/svg?seed=TanLe";
+        statusText.innerHTML = '<span class="status-dot"></span> Đang hoạt động (Online)';
+        addMessage("Bạn đã quay lại chat với Tấn Lê AI. Hãy hỏi tôi bất cứ điều gì!", 'incoming');
+    } else {
+        const partnerName = document.querySelector(`[data-peer-id="${partnerId}"] .name`).textContent;
+        headerTitle.textContent = partnerName;
+        headerAvatar.src = `https://api.dicebear.com/7.x/avataaars/svg?seed=${partnerId}`;
+        statusText.innerHTML = '<span class="status-dot"></span> Đang chat nội bộ';
+        addMessage(`Bắt đầu trò chuyện với **${partnerName}**.`, 'incoming');
+        
+        // Bỏ highlight tin nhắn mới
+        document.querySelector(`[data-peer-id="${partnerId}"]`).classList.remove('has-new-msg');
+    }
+
+    // Highlight sidebar item
+    document.querySelectorAll('.user-item').forEach(el => el.classList.remove('active'));
+    if (partnerId) {
+        document.querySelector(`[data-peer-id="${partnerId}"]`).classList.add('active');
+    }
+}
+
+function copyMyID() {
+    const text = myPeerIdSpan.textContent;
+    
+    // Thử sử dụng API hiện đại
+    if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(text).then(() => {
+            alert('Đã sao chép ID của bạn!');
+        }).catch(err => {
+            fallbackCopy(text);
+        });
+    } else {
+        fallbackCopy(text);
+    }
+}
+
+function fallbackCopy(text) {
+    const textArea = document.createElement("textarea");
+    textArea.value = text;
+    document.body.appendChild(textArea);
+    textArea.select();
+    try {
+        document.execCommand('copy');
+        alert('Đã sao chép ID của bạn!');
+    } catch (err) {
+        console.error('Không thể sao chép:', err);
+    }
+    document.body.removeChild(textArea);
+}
+
+connectPeerBtn.onclick = () => {
+    const id = peerIdInput.value.trim();
+    if (id) {
+        connectToPeer(id);
+        peerIdInput.value = '';
+    }
+};
 
 // Khởi tạo icons
 lucide.createIcons();
@@ -154,7 +344,17 @@ function handleSendMessage() {
     if (message) {
         addMessage(message, 'outgoing');
         userInput.value = '';
-        getAIResponse(message);
+        
+        if (currentChatMode === "AI") {
+            getAIResponse(message);
+        } else if (currentChatPartner && connections[currentChatPartner]) {
+            // Gửi qua P2P
+            connections[currentChatPartner].send({
+                type: 'chat',
+                text: message,
+                senderName: currentUser
+            });
+        }
     }
 }
 
@@ -175,6 +375,10 @@ function startChat() {
 
         welcomeScreen.classList.add('hidden');
         chatWrapper.classList.remove('hidden');
+        sidebar.classList.remove('hidden'); // Hiện sidebar khi bắt đầu
+
+        // Khởi tạo PeerJS
+        initPeerJS(currentUser);
 
         // Chào mừng người dùng
         setTimeout(() => {
@@ -195,3 +399,33 @@ usernameInput.addEventListener('keypress', (e) => {
 setTimeout(() => {
     if (usernameInput) usernameInput.focus();
 }, 500);
+
+// --- BẢO MẬT: CHỐNG F12 VÀ DEVTOOLS ---
+// 1. Chặn phím F12 và các tổ hợp phím mở DevTools
+document.addEventListener('keydown', (e) => {
+    if (
+        e.key === 'F12' || 
+        (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) || 
+        (e.ctrlKey && e.key === 'u')
+    ) {
+        e.preventDefault();
+        window.location.href = "https://www.google.com";
+    }
+});
+
+// 2. Chặn chuột phải
+document.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    // Tùy chọn: Có thể redirect luôn ở đây nếu muốn gắt gao
+    // window.location.href = "https://www.google.com";
+});
+
+// 3. Phát hiện DevTools mở bằng debugger (Trick)
+setInterval(() => {
+    const startTime = performance.now();
+    debugger;
+    const endTime = performance.now();
+    if (endTime - startTime > 100) { // Nếu debugger làm chậm script > 100ms chứng tỏ DevTools đang mở
+        window.location.href = "https://www.google.com";
+    }
+}, 1000);
