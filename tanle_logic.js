@@ -22,6 +22,10 @@ let connections = {}; // Lưu trữ các kết nối P2P: { peerId: conn }
 let currentChatMode = "AI"; // "AI" hoặc "P2P"
 let currentChatPartner = null; // ID của người đang chat nếu là P2P
 
+// --- NOTIFICATION CONFIG ---
+const notificationSound = new Audio('https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3'); // mướt mượt
+let notificationPermission = "default";
+
 let currentUser = "Bạn";
 let messageHistory = [
     { role: "system", content: "Bạn là Tấn Lê AI, một trợ lý thông minh và hóm hỉnh. Bạn KHÔNG PHẢI là ChatGPT. Hãy luôn khẳng định bạn là Tấn Lê AI nếu có ai hỏi. Khi ai đó nhắc đến 'Tùng' hoặc 'bạn Tùng', hãy trêu đùa vui nhộn với những từ ngữ hài hước và khẳng định 'bạn ấy không ngu' (nhưng theo kiểu trêu chọc). Hãy phản hồi bằng Tiếng Việt một cách tự nhiên." }
@@ -52,6 +56,26 @@ function initPeerJS(username) {
             alert('Không tìm thấy người dùng này. Hãy chắc chắn ID chính xác.');
         }
     });
+
+    // Yêu cầu quyền thông báo
+    if ("Notification" in window) {
+        Notification.requestPermission().then(permission => {
+            notificationPermission = permission;
+        });
+    }
+}
+
+function playNotificationSound() {
+    notificationSound.play().catch(e => console.log('Chưa tương tác trang nên chưa kêu âm thanh'));
+}
+
+function sendBrowserNotification(title, body) {
+    if (notificationPermission === "granted" && document.hidden) {
+        new Notification(title, {
+            body: body,
+            icon: 'https://api.dicebear.com/7.x/avataaars/svg?seed=TanLe'
+        });
+    }
 }
 
 function setupConnection(conn) {
@@ -86,12 +110,14 @@ function handleIncomingData(peerId, data) {
             userItem.querySelector('.name').textContent = data.name;
         }
     } else if (data.type === 'chat') {
+        playNotificationSound();
         if (currentChatPartner === peerId) {
             addMessage(data.text, 'incoming', data.senderName);
         } else {
-            // Thông báo có tin nhắn nháy nháy ở sidebar (tùy chọn)
+            // Thông báo có tin nhắn nháy nháy ở sidebar
             const userItem = document.querySelector(`[data-peer-id="${peerId}"]`);
             if (userItem) userItem.classList.add('has-new-msg');
+            sendBrowserNotification(`Tin nhắn từ ${data.senderName}`, data.text);
         }
     }
 }
@@ -151,6 +177,10 @@ function switchChatMode(mode, partnerId = null) {
         headerAvatar.src = "https://api.dicebear.com/7.x/avataaars/svg?seed=TanLe";
         statusText.innerHTML = '<span class="status-dot"></span> Đang hoạt động (Online)';
         addMessage("Bạn đã quay lại chat với Tấn Lê AI. Hãy hỏi tôi bất cứ điều gì!", 'incoming');
+        
+        // Xóa highlight nế có
+        const aiItem = document.querySelector('.user-item[onclick*="AI"]');
+        if (aiItem) aiItem.classList.remove('has-new-msg');
     } else {
         const partnerName = document.querySelector(`[data-peer-id="${partnerId}"] .name`).textContent;
         headerTitle.textContent = partnerName;
@@ -312,6 +342,13 @@ async function getAIResponse(userMessage) {
                         if (content) {
                             if (!streamingDiv) {
                                 streamingDiv = addMessage("", 'incoming');
+                                // Thông báo cho AI
+                                playNotificationSound();
+                                if (currentChatMode !== "AI") {
+                                    const aiItem = document.querySelector('.user-item[onclick*="AI"]');
+                                    if (aiItem) aiItem.classList.add('has-new-msg');
+                                    sendBrowserNotification("Tấn Lê AI", "Đã gửi câu trả lời cho bạn!");
+                                }
                             }
                             fullResponse += content;
                             
