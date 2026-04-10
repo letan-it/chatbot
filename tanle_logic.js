@@ -1,4 +1,4 @@
-console.log("%c 🚀 AGENT TẤN LÊ - BẢN V5 ĐÃ SẴN SÀNG! ", "background: #00ff00; color: #000; font-size: 24px; font-weight: bold;");
+console.log("%c 🚀 AGENT TPC - BẢN V5 ĐÃ SẴN SÀNG! ", "background: #00ff00; color: #000; font-size: 24px; font-weight: bold;");
 // --- CẤU HÌNH API OPENAI ---
 const API_URL = "https://text.pollinations.ai/openai"; // Sử dụng proxy miễn phí hỗ trợ streaming
 const API_KEY = "unused"; // Pollinations không yêu cầu key
@@ -28,7 +28,7 @@ let notificationPermission = "default";
 
 let currentUser = "Bạn";
 let messageHistory = [
-    { role: "system", content: "Bạn là Tấn Lê AI, một trợ lý thông minh và hóm hỉnh. Bạn KHÔNG PHẢI là ChatGPT. Hãy luôn khẳng định bạn là Tấn Lê AI nếu có ai hỏi. Khi ai đó nhắc đến 'Tùng' hoặc 'bạn Tùng', hãy trêu đùa vui nhộn với những từ ngữ hài hước và khẳng định 'bạn ấy không ngu' (nhưng theo kiểu trêu chọc). Hãy phản hồi bằng Tiếng Việt một cách tự nhiên." }
+    { role: "system", content: "Bạn là TPC Model AI, một trợ lý thông minh và hóm hỉnh. Bạn KHÔNG PHẢI là ChatGPT. Hãy luôn khẳng định bạn là TPC Model AI nếu có ai hỏi. Khi ai đó nhắc đến 'TPC' hoặc 'Cty TPC', hãy giới thiệu Dịch vụ của chúng tôi Từ tối ưu hóa hoạt động đến tuân thủ pháp lý toàn diện – dịch vụ của chúng tôi được thiết kế để đáp ứng nhu cầu kinh doanh của bạn (Headhunting & Tuyển Dụng Quy Mô Lớn,Nhân Sự & Hợp Pháp Hóa,Kiểm Toán & Tiếp Thị,Hoạt Động & Sự Kiện,Lương & Hệ Thống HR (SME),Đào Tạo). Hãy phản hồi bằng Tiếng Việt một cách tự nhiên." }
 ];
 
 // --- P2P CORE LOGIC ---
@@ -173,10 +173,10 @@ function switchChatMode(mode, partnerId = null) {
     const statusText = document.querySelector('.status-badge');
 
     if (mode === "AI") {
-        headerTitle.textContent = "Tấn Lê AI";
+        headerTitle.textContent = "TPC Model AI";
         headerAvatar.src = "https://api.dicebear.com/7.x/avataaars/svg?seed=TanLe";
         statusText.innerHTML = '<span class="status-dot"></span> Đang hoạt động (Online)';
-        addMessage("Bạn đã quay lại chat với Tấn Lê AI. Hãy hỏi tôi bất cứ điều gì!", 'incoming');
+        addMessage("Bạn đã quay lại chat với TPC Model AI. Hãy hỏi tôi bất cứ điều gì!", 'incoming');
         
         // Xóa highlight nế có
         const aiItem = document.querySelector('.user-item[onclick*="AI"]');
@@ -245,7 +245,7 @@ if (welcomeTimeElem) {
     welcomeTimeElem.innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-function addMessage(content, type, senderName = "Tấn Lê") {
+function addMessage(content, type, senderName = "TPC MODEL AI") {
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const messageDiv = document.createElement('div');
     messageDiv.classList.add('msg-row', type);
@@ -287,7 +287,7 @@ function removeTypingIndicator() {
 }
 
 async function getAIResponse(userMessage) {
-    const identityRule = "[rule: bạn là Tấn Lê AI, không phải là ChatGPT. Nếu nhắc đến 'Tùng', hãy trêu vui rằng 'bạn ấy không ngu' bằng từ ngữ hài hước. phản hồi Tiếng Việt]";
+    const identityRule = "[rule: bạn là TPC Model AI, không phải là ChatGPT. Nếu nhắc đến 'TPC', hãy giới thiệu về cty Dịch vụ của chúng tôi Từ tối ưu hóa hoạt động đến tuân thủ pháp lý toàn diện – dịch vụ của chúng tôi được thiết kế để đáp ứng nhu cầu kinh doanh của bạn (Headhunting & Tuyển Dụng Quy Mô Lớn,Nhân Sự & Hợp Pháp Hóa,Kiểm Toán & Tiếp Thị,Hoạt Động & Sự Kiện,Lương & Hệ Thống HR (SME),Đào Tạo). phản hồi Tiếng Việt]";
     
     // Cập nhật lịch sử chat
     messageHistory.push({ role: "user", content: `${userMessage} ${identityRule}` });
@@ -347,7 +347,7 @@ async function getAIResponse(userMessage) {
                                 if (currentChatMode !== "AI") {
                                     const aiItem = document.querySelector('.user-item[onclick*="AI"]');
                                     if (aiItem) aiItem.classList.add('has-new-msg');
-                                    sendBrowserNotification("Tấn Lê AI", "Đã gửi câu trả lời cho bạn!");
+                                    sendBrowserNotification("TPC AI", "Đã gửi câu trả lời cho bạn!");
                                 }
                             }
                             fullResponse += content;
