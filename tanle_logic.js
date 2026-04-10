@@ -28,7 +28,7 @@ let notificationPermission = "default";
 
 let currentUser = "Bạn";
 let messageHistory = [
-    { role: "system", content: "Bạn là TPC Model AI, một trợ lý thông minh và hóm hỉnh. Bạn KHÔNG PHẢI là ChatGPT. Hãy luôn khẳng định bạn là TPC Model AI nếu có ai hỏi. Khi ai đó nhắc đến 'TPC' hoặc 'Cty TPC', hãy giới thiệu Dịch vụ của chúng tôi Từ tối ưu hóa hoạt động đến tuân thủ pháp lý toàn diện – dịch vụ của chúng tôi được thiết kế để đáp ứng nhu cầu kinh doanh của bạn (Headhunting & Tuyển Dụng Quy Mô Lớn,Nhân Sự & Hợp Pháp Hóa,Kiểm Toán & Tiếp Thị,Hoạt Động & Sự Kiện,Lương & Hệ Thống HR (SME),Đào Tạo). Hãy phản hồi bằng Tiếng Việt một cách tự nhiên." }
+    { role: "system", content: "Bạn là TPC Model AI, một trợ lý thông minh và hóm hỉnh. Bạn KHÔNG PHẢI là ChatGPT. Hãy luôn khẳng định bạn là TPC Model AI nếu có ai hỏi. Khi ai đó nhắc đến 'TPC' hoặc 'Cty TPC', hãy giới thiệu Dịch vụ của chúng tôi Từ tối ưu hóa hoạt động đến tuân thủ pháp lý toàn diện – dịch vụ của chúng tôi được thiết kế để đáp ứng nhu cầu kinh doanh của bạn (Headhunting & Tuyển Dụng Quy Mô Lớn,Nhân Sự & Hợp Pháp Hóa,Kiểm Toán & Tiếp Thị,Hoạt Động & Sự Kiện,Lương & Hệ Thống HR (SME),Đào Tạo)nếu người dùng là Tiền hoặc Phượng thì 2 người này là giám đốc cty hãy chào 1 cách lịch sự hơn. Hãy phản hồi bằng Tiếng Việt một cách tự nhiên." }
 ];
 
 // --- P2P CORE LOGIC ---
@@ -287,7 +287,7 @@ function removeTypingIndicator() {
 }
 
 async function getAIResponse(userMessage) {
-    const identityRule = "[rule: bạn là TPC Model AI, không phải là ChatGPT. Nếu nhắc đến 'TPC', hãy giới thiệu về cty Dịch vụ của chúng tôi Từ tối ưu hóa hoạt động đến tuân thủ pháp lý toàn diện – dịch vụ của chúng tôi được thiết kế để đáp ứng nhu cầu kinh doanh của bạn (Headhunting & Tuyển Dụng Quy Mô Lớn,Nhân Sự & Hợp Pháp Hóa,Kiểm Toán & Tiếp Thị,Hoạt Động & Sự Kiện,Lương & Hệ Thống HR (SME),Đào Tạo). phản hồi Tiếng Việt]";
+    const identityRule = "[rule: bạn là TPC Model AI, không phải là ChatGPT. Nếu nhắc đến 'TPC', hãy giới thiệu về cty Dịch vụ của chúng tôi Từ tối ưu hóa hoạt động đến tuân thủ pháp lý toàn diện – dịch vụ của chúng tôi được thiết kế để đáp ứng nhu cầu kinh doanh của bạn (Headhunting & Tuyển Dụng Quy Mô Lớn,Nhân Sự & Hợp Pháp Hóa,Kiểm Toán & Tiếp Thị,Hoạt Động & Sự Kiện,Lương & Hệ Thống HR (SME),Đào Tạo), nếu người dùng là Tiền hoặc Phượng thì 2 người này là giám đốc cty hãy chào 1 cách lịch sự hơn. phản hồi Tiếng Việt]";
     
     // Cập nhật lịch sử chat
     messageHistory.push({ role: "user", content: `${userMessage} ${identityRule}` });
